@@ -1,0 +1,91 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>choose your style</title>
+<script type="text/javascript" src="http://www.w3school.com.cn/jquery/jquery.js"></script>
+<style>
+.tabs{width: 1200px; margin: 0 auto; height: 500px; overflow: hidden;}
+.tabs_item{height: 36px;}
+.tabs_block{height: 300px;}
+.list_item{float: left; width: 200px; height: 36px; line-height: 36px; font-size: 26px; text-align: center;}
+.list_item.active{color: #E9914F;}
+.tabs_block{width: 20000px; position: relative;}
+
+.list_block{display: none; float: left; width: 1200px; height: 300px; font-size: 100px; text-align: center; line-height: 300px;}
+
+.list_block.show{display: block;}
+</style>
+
+<script>
+
+jQuery.easing['easeOutCubic'] = function (x, t, b, c, d) {
+ return c*((t=t/d-1)*t*t + 1) + b;
+};
+function Tabs(tabs,list,block,item,$){
+ var tabs  = $(tabs);
+ var width = tabs.width();
+ tabs.find(list+':first').addClass('active');
+ tabs.find(item+':first').addClass('show');
+
+ tabs.find(list).click(function(){
+  var $this = $(this);
+  var i = tabs.find(block).find('.show').index();//当前显示的图像
+  var n = $this.index();//当前选择
+	form = document.forms['style_submit'];
+  form.elements['iterm'].value = String(n);
+  $this.addClass('active').siblings('.active').removeClass('active');
+  tabs.find(item).eq(n).addClass('show');
+  if(n > i){
+   tabs.find(block).stop().animate({'left':'-'+width+'px'},600,'easeOutCubic',function(){
+    tabs.find(block).css('left','0px');
+    tabs.find(item).eq(n).siblings('.show').removeClass('show');
+   });
+  }else{
+   tabs.find(block).css('left','-'+width+'px').stop().animate({'left':0},600,'easeOutCubic',function(){
+    tabs.find(item).eq(n).siblings('.show').removeClass('show');
+   });
+  }
+ });
+}
+</script>
+<link rel="stylesheet" href="static/css/app.css">
+<link rel="stylesheet" href="static/css/index.css">
+<link rel="stylesheet" href="static/css/fonts.css">
+</head>
+
+<body>
+ <div class="tabs">
+  <div class="tabs_item">
+   <div class="list_item">风格1</div>
+   <div class="list_item">风格2</div>
+   <div class="list_item">风格3</div>
+   <div class="list_item">风格4</div>
+   <div class="list_item">风格5</div>
+   <div class="list_item">风格6</div>
+  </div>
+  <div class="clear"> </div>
+  <div class="tabs_block">
+   <div class="list_block"><img src="static/img/starry.jpg"></div>
+   <div class="list_block"><img src="static/img/cubist.jpg"></div>
+   <div class="list_block"><img src="static/img/feathers.jpg"></div>
+   <div class="list_block"><img src="static/img/mosaic.jpg"></div>
+   <div class="list_block"><img src="static/img/udnie.jpg"></div>
+   <div class="list_block"><img src="static/img/wave.jpg"></div>
+  </div>
+ </div>
+<script type="text/javascript">
+ jQuery(document).ready(function(){
+    var myTabs = new Tabs('.tabs','.list_item','.tabs_block','.list_block',jQuery);
+ });
+</script>
+<!--居中-->
+<div align="center" margin-left="auto"  margin-right="auto">
+<form action="" method="post" name="style_submit">
+{{form.hidden_tag()}}
+<p>{{form.iterm(size=10)}}</p>
+<input type="submit" value="submit">
+</form>
+</div>
+</body>
+</html>

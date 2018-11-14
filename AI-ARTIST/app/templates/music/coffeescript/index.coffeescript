@@ -1,0 +1,210 @@
+
+
+class Visualizer
+  constructor: (size) ->  
+    @size = size
+    @levels = []
+     
+    @buildScene()
+    @buildGrid()
+    
+    window.addEventListener 'resize', @windowResize
+
+    @render()
+    
+    $('input#fileselect').on 'change', (e) =>
+      @analyser?.stop()
+      @stream = URL.createObjectURL($('input#fileselect')[0].files[0])
+      @startAnalyser()
+      
+  play: (data) -> 
+    @stream = data
+    @startAnalyser()
+    
+  buildScene: ->
+    @scene = new THREE.Scene()
+    @camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 )
+    
+    @renderer = new THREE.WebGLRenderer
+      antialias: true
+    @renderer.setSize( window.innerWidth, window.innerHeight )
+    
+    document.body.appendChild( @renderer.domElement )
+    @scene.add new THREE.AmbientLight( 0x303030 )
+    
+    @light = new THREE.DirectionalLight( 0xffffff, 1 );
+    @scene.add( @light )
+    @positionLight()
+    @positionCamera()
+    
+  windowResize: =>
+    @renderer.setSize( window.innerWidth, window.innerHeight )
+    
+    @camera.aspect = window.innerWidth / window.innerHeight
+    @camera.updateProjectionMatrix()
+    
+  buildGrid: ->
+    @grid = new THREE.Object3D()
+    @scene.add @grid
+    @bars = for row in [ 0...@size ]
+      for col in [ 0...@size ]
+        bar = new VisualizerBar(row,col,@size)
+        @grid.add(bar.mesh)
+        bar
+        
+  startAnalyser: ->
+    @analyser = new AudioAnalyser(@stream,@size,0.5) 
+    @analyser.onUpdate = (bands) =>
+      @updateLevels bands    
+    @analyser.start()        
+    $('.pause').on 'click', =>
+      @analyser.stop()
+
+    $('.play').on 'click', =>
+      @analyser.start()
+      
+  positionCamera: ->
+    @camera.position.y = 18
+    @camera.position.x = 20
+    @camera.position.z = 0
+    @camera.lookAt @scene.position 
+    @camera.position.y = 10
+    
+  positionLight: ->
+    @light.position.y = 2
+    @light.position.x = 0
+    @light.position.z = -1
+    
+    
+  updateLevels: (bands) ->
+    @levels.unshift Array.prototype.slice.call(bands)
+    if @levels.length > 16
+      @levels.pop() 
+
+  updateBars: ->
+    for row,x in @bars
+      for bar,y in row
+        bar.setLevel(@levels[x]?[y])
+          
+  render: (t=0) =>
+    requestAnimationFrame @render 
+    @updateBars()
+    @grid.rotation.y = t/3000
+    @renderer.render @scene, @camera 
+
+    
+     
+class VisualizerBar
+  constructor: (row,col,size) ->
+    @level = 0
+    @row = row
+    @col = col
+    @size = size
+    @spacing = 1.8
+    @scale_factor = 3
+    @offset = @size * @spacing / 2 - 1 
+    material = new THREE.MeshLambertMaterial
+      color: @color()
+      ambient: @color()
+      
+    geometry = new THREE.BoxGeometry( 1,1,1 )
+    @mesh = new THREE.Mesh( geometry, material )
+    @mesh.position.set( @xPos(), 0, @zPos() )
+    @setLevel()
+    
+  xPos: ->
+    @row*@spacing-@offset
+    
+  zPos: ->
+    @col*@spacing-@offset
+    
+  setLevel: (l=0.1) ->
+    if l < 0.1 
+      l = 0.1
+    if @level isnt l/255 
+      @level = l/255
+      
+      @mesh.scale.y = @level*@scale_factor
+      @mesh.position.y = @level*@scale_factor/2
+    
+  color: ->
+    s=255/(@size+1)*1.3
+    
+    g = 255-Math.ceil(@col*s)
+    b = 255-Math.ceil(@row*s)
+    r = (200-Math.ceil((@row+@col)/2*s*1.5))*-1
+    
+
+    b = if b < 0 then 0 else b
+    g = if g < 0 then 0 else g
+    r = if r < 0 then 0 else r   
+    
+    r*65536 + g*256 + b
+    
+class AudioAnalyser
+  ## Stole this class from soulwire
+  ## https://codepen.io/soulwire/pen/Dscga
+  
+  @AudioContext: self.AudioContext or self.webkitAudioContext
+  @enabled: @AudioContext?
+  
+  constructor: ( @audio = new Audio(), @numBands = 256, @smoothing = 0.3 ) ->
+  
+    # construct audio object
+    if typeof @audio is 'string'
+      
+      src = @audio
+      @audio = new Audio()
+      @audio.controls = yes
+      @audio.src = src
+  
+    # setup audio context and nodes
+    @context = new AudioAnalyser.AudioContext()
+    
+    # createScriptProcessor so we can hook onto updates
+    @jsNode = @context.createScriptProcessor 1024, 1, 1
+    
+    # smoothed analyser with n bins for frequency-domain analysis
+    @analyser = @context.createAnalyser()
+    @analyser.smoothingTimeConstant = @smoothing
+    @analyser.fftSize = @numBands * 2
+    
+    # persistant bands array
+    @bands = new Uint8Array @analyser.frequencyBinCount
+
+    # circumvent http://crbug.com/112368
+    @audio.addEventListener 'canplay', =>
+    
+      # media source
+      @source = @context.createMediaElementSource @audio
+
+      # wire up nodes
+
+      @source.connect @analyser
+      @analyser.connect @jsNode
+
+      @jsNode.connect @context.destination
+      @source.connect @context.destination
+
+      # update each time the JavaScriptNode is called
+      @jsNode.onaudioprocess = =>
+
+        # retreive the data from the first channel
+        @analyser.getByteFrequencyData @bands
+        
+        # fire callback
+        @onUpdate? @bands if not @audio.paused
+        
+  start: ->
+    $('.controls').addClass 'playing'
+    @audio.play()
+    
+  stop: ->
+    $('.controls').removeClass 'playing'
+    @audio.pause()
+
+vis = new Visualizer(16)  
+
+window.loadData = (data) =>
+  $('.overlay .title').text 'Infected Mushroom - Symphonatic'
+  vis.play data

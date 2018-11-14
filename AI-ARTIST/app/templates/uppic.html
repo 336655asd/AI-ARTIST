@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html >
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>Upload</title>
+<link rel="stylesheet" href="static/css/app.css">
+<link rel="stylesheet" href="static/css/index.css">
+<link rel="stylesheet" href="static/css/fonts.css">
+<link href="bootstrap/3.0.0/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="static/skew-text/css/style1.css">
+<link rel="stylesheet" type="text/css" href="static/button/css/base_music.css" />
+<script>document.documentElement.className="js";var supportsCssVars=function(){var e,t=document.createElement("style");return t.innerHTML="root: { --tmp-var: bold; }",document.head.appendChild(t),e=!!(window.CSS&&window.CSS.supports&&window.CSS.supports("font-weight","var(--tmp-var)")),t.parentNode.removeChild(t),e};supportsCssVars()||alert("Please view this demo in a modern browser that supports CSS Variables.");</script>
+<script src="https://cdn.bootcss.com/jquery/1.10.2/jquery.min.js"></script>
+
+</head>
+<body>
+<!-- 代码 开始 -->
+
+<div class="text">
+  <span>A</span>
+  <span>I</span>
+  <span></span>
+  <span>A</span>
+  <span>R</span>
+  <span>T</span>
+  <span>I</span>
+  <span>S</span>
+  <span>T</span>
+</div>
+<div class="container" align="center" margin-left="auto"  margin-right="auto">
+    <div>
+        <h3 class="text-muted">How To Upload a File.</h3>
+    </div> 
+<hr/>
+    <div>
+        <form action="upload" method="post" enctype="multipart/form-data">
+	<div class="upload-file">
+            <input type="file" class="input-file" multiple="" name="file[]"/><br/>
+	    <span class="tip">选择图片</span>
+	</div>
+            <input type="submit" value="Upload" class="span2">
+        </form>
+    </div>
+</div>
+
+</body>
+</html>
